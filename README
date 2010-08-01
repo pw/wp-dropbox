@@ -1,0 +1,62 @@
+=== The Dropbox Plugin ===
+Contributors: player1
+Donate link: http://software.o-o.ro/
+Tags: dropbox
+Requires at least: 2.7.1
+Tested up to: 2.7.1
+Stable tag: trunk
+
+Dropbox in wordpress. Based on Dropbox Connection (www.individual-it.net/Software.html) which in turn is based on Dropbox Uploader (jaka.kubje.org/)
+
+== Description ==
+
+The plugin allows browsing downloading and uploading of files to dropbox. For questions and troubleshooting feel free to ask here: http://software.o-o.ro/dropbox-plugin-for-wordpress/
+
+== Installation ==
+
+1)Install by uploading the folder named dropbox-plugin in your wordpress plugins folder. <br/>
+2)Place <?php show_dropbox(); ?> wherever you want the dropbox to show. <br/>
+3)Place <?php tdp_upload(); ?> wherever you want the upload form to show. <br/>
+4)You may now alternatively use the [dropbox] and [dropboxupload] shortcodes to display the dropbox and the upload form respectively.
+
+== Frequently Asked Questions ==
+Q:I'm getting some SSL error thing. Why?<br/>
+A:Your webhost doesn't have the required SSL. There are instructions oh how to get it and make it work here: http://jaka.kubje.org/software/dropboxuploader/
+
+== Screenshots ==
+1. Admin options screen
+2. Code for showing dropbox
+3. Dropbox example
+4. Code for showing upload form
+5. Dropbox example with upload form
+
+== Changelog ==
+= 010 =
+Added option to show file size
+Added option to show date and time of last modification
+= 009 =
+Fixed to work with the new dropbox url.
+Fixed a problem with the permalinks
+Added shortcodes
+= 008 =
+Switched to the new way of storing options. Might be compatible with wordpressMU. Need volunteer to find out.
+= 007 =
+Security update restricting acces to plugin settings. Please update if you have a multi-user blog.
+
+= 006 =
+Fixed obvious mistake in password code.
+
+= 005 =
+Files with a space in the name now mostly work.
+
+= 004 =
+Fixed url character bug.
+
+= 003 =
+Updated Dropbox connection class.
+
+= 002 =
+Updated Dropbox connection class.
+
+= 001 =
+Release.
