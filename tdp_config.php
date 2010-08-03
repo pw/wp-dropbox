@@ -19,8 +19,8 @@
      
 */
 
-$dbemail=get_option('tdp_mail');
-$dbpassword=get_option('tdp_pass');
+$consumerKey=get_option('tdp_consumer_key');
+$consumerKey=get_option('tdp_consumer_secret');
 $dbdir = get_option('tdp_dir');
 
    
