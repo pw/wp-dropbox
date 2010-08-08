@@ -1,7 +1,19 @@
 <?php
   if (isset($_POST['allow_access']))
   {
-  echo "jdsfk";
+    $consumerKey = 'w8z4e3xgzmskrc6';
+    $consumerSecret = 'kk42qgdi3uu9ykv';
+
+    //modify include path to work w/ PEAR on Dreamhost
+    ini_set(
+	    'include_path',
+	    ini_get( 'include_path' ) . PATH_SEPARATOR . "home/(youruser)/pear/php"
+	    );
+
+    include 'Dropbox/autoload.php';
+
+    $oauth = new Dropbox_OAuth_PEAR($consumerKey, $consumerSecret);
+    $oauth->authorizeCallbackUrl = $_SERVER["REQUEST_URI"];
   }
 ?>
 <div class="wrap">

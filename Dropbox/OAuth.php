@@ -90,22 +90,23 @@ abstract class Dropbox_OAuth {
 
     public function saveState() {
 
-        $_SESSION['dropbox'] = array(
-            'oauth_token' => $this->oauth_token,
-            'oauth_token_secret' => $this->oauth_token_secret,
-            'state' => $this->currentState,
-        );
+	update_option('wpdp_oauth_token', $this->oauth_token);
+	update_option('wpdp_oauth_token_secret', $this->oauth_token_secret);
+	update_option('wpdp_state', $this->currentState);
 
     }
 
     public function loadState() {
 
-        if (isset($_SESSION['dropbox'])) {
-            $this->oauth_token = isset($_SESSION['dropbox']['oauth_token'])?$_SESSION['dropbox']['oauth_token']:null;
-            $this->oauth_token_secret = isset($_SESSION['dropbox']['oauth_token_secret'])?$_SESSION['dropbox']['oauth_token_secret']:null;
-            $this->currentState = isset($_SESSION['dropbox']['state'])?$_SESSION['dropbox']['state']:null;
-        }
+	$saved_oauth_token = get_option('wpdp_oauth_token');
+	$this->oauth_token = empty($saved_oauth_token) ? null : $saved_oauth_token;
 
+	$saved_oauth_token_secret = get_option('wpdp_oauth_token_secret');
+	$this->oauth_token_secret = empty($saved_oauth_token_secret) ? null : $saved_oauth_token_secret;
+
+	$saved_state = get_option('wpdp_state');
+	$this->currentState = empty($saved_state) ? null : $saved_state;
+	
     }
 
     /**
