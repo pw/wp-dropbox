@@ -56,6 +56,24 @@ class Dropbox_OAuth_PEAR extends Dropbox_OAuth {
     }
 
     /**
+     * Sets the request token and secret.
+     *
+     * The tokens can also be passed as an array into the first argument.
+     * The array must have the elements token and token_secret.
+     * 
+     * @param string|array $token 
+     * @param string $token_secret 
+     * @return void
+     */
+    public function setToken($token, $token_secret = null) {
+
+        parent::setToken($token,$token_secret);
+        $this->OAuth->setToken($this->oauth_token);
+        $this->OAuth->setTokenSecret($this->oauth_token_secret);
+
+    }
+
+    /**
      * Fetches a secured oauth url and returns the response body. 
      * 
      * @param string $uri 
@@ -65,9 +83,6 @@ class Dropbox_OAuth_PEAR extends Dropbox_OAuth {
      * @return string 
      */
     public function fetch($uri, $arguments = array(), $method = 'GET', $httpHeaders = array()) {
-
-        $this->OAuth->setToken($this->oauth_token);
-        $this->OAuth->setTokenSecret($this->oauth_token_secret);
 
         $consumerRequest = new HTTP_OAuth_Consumer_Request();
         $consumerRequest->setUrl($uri);
@@ -96,51 +111,58 @@ class Dropbox_OAuth_PEAR extends Dropbox_OAuth {
         }
 
         $response = $consumerRequest->send();
-        return $response->getBody();
+
+        switch($response->getStatus()) {
+
+              // Not modified
+            case 304 :
+                return array(
+                    'httpStatus' => 304,
+                    'body'       => null,
+                );
+                break;
+            case 403 :
+                throw new Dropbox_Exception_Forbidden('Forbidden. This could mean a bad OAuth request, or a file or folder already existing at the target location.');
+            case 404 : 
+                throw new Dropbox_Exception_NotFound('Resource at uri: ' . $uri . ' could not be found');
+            case 507 : 
+                throw new Dropbox_Exception_OverQuota('This dropbox is full');
+
+        }
+
+        return array(
+            'httpStatus' => $response->getStatus(),
+            'body' => $response->getBody()
+        );
 
     }
 
     /**
      * Requests the OAuth request token.
-     *
-     * This method must return an array with 2 elements:
-     *   * oauth_token
-     *   * oauth_token_secret
      * 
-     * @return array 
+     * @return void
      */
-    public function request_token() {
+    public function getRequestToken() {
         
         $this->OAuth->getRequestToken(self::URI_REQUEST_TOKEN);
-        return array(
-            'oauth_token' => $this->OAuth->getToken(),
-            'oauth_token_secret' => $this->OAuth->getTokenSecret(),
-        );
+        $this->setToken($this->OAuth->getToken(), $this->OAuth->getTokenSecret());
+        return $this->getToken();
 
     }
-
 
     /**
      * Requests the OAuth access tokens.
      *
      * This method requires the 'unauthorized' request tokens
-     * and, if successful will return the authorized request tokens.
+     * and, if successful will set the authorized request tokens.
      * 
-     * This method must return an array with 2 elements:
-     *   * oauth_token
-     *   * oauth_token_secret
-     *
-     * @return array
+     * @return void 
      */
-    public function access_token($oauth_token, $oauth_token_secret) {
+    public function getAccessToken() {
 
-        $this->OAuth->setToken($oauth_token);
-        $this->OAuth->setTokenSecret($oauth_token_secret);
         $this->OAuth->getAccessToken(self::URI_ACCESS_TOKEN);
-        return array(
-            'oauth_token' => $this->OAuth->getToken(),
-            'oauth_token_secret' => $this->OAuth->getTokenSecret(),
-        );
+        $this->setToken($this->OAuth->getToken(), $this->OAuth->getTokenSecret());
+        return $this->getToken();
 
     }
 

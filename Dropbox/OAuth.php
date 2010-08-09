@@ -27,24 +27,6 @@ abstract class Dropbox_OAuth {
     public $authorizeCallbackUrl = null; 
    
     /**
-     * The user has not yet authorized access
-     */
-    const STATE_UNAUTHORIZED = 0;
-
-    /**
-     * The user is redirect to authorize dropbox access
-     */
-    const STATE_USERAUTHORIZING = 1;
-    const STATE_AUTHORIZED = 2;
-
-    /**
-     * The currente authentication state 
-     * 
-     * @var int 
-     */
-    protected $currentState = self::STATE_UNAUTHORIZED;
-
-    /**
      * Uri used to fetch request tokens 
      * 
      * @var string
@@ -88,68 +70,57 @@ abstract class Dropbox_OAuth {
      */
     abstract public function __construct($consumerKey, $consumerSecret);
 
-    public function saveState() {
+    /**
+     * Sets the request token and secret.
+     *
+     * The tokens can also be passed as an array into the first argument.
+     * The array must have the elements token and token_secret.
+     * 
+     * @param string|array $token 
+     * @param string $token_secret 
+     * @return void
+     */
+    public function setToken($token, $token_secret = null) {
 
-	update_option('wpdp_oauth_token', $this->oauth_token);
-	update_option('wpdp_oauth_token_secret', $this->oauth_token_secret);
-	update_option('wpdp_state', $this->currentState);
+        if (is_array($token)) {
+            $this->oauth_token = $token['token'];
+            $this->oauth_token_secret = $token['token_secret'];
+        } else {
+            $this->oauth_token = $token;
+            $this->oauth_token_secret = $token_secret;
+        }
 
-    }
-
-    public function loadState() {
-
-	$saved_oauth_token = get_option('wpdp_oauth_token');
-	$this->oauth_token = empty($saved_oauth_token) ? null : $saved_oauth_token;
-
-	$saved_oauth_token_secret = get_option('wpdp_oauth_token_secret');
-	$this->oauth_token_secret = empty($saved_oauth_token_secret) ? null : $saved_oauth_token_secret;
-
-	$saved_state = get_option('wpdp_state');
-	$this->currentState = empty($saved_state) ? null : $saved_state;
-	
     }
 
     /**
-     * Sets up authentication
+     * Returns the oauth request tokens as an associative array.
      *
-     * Note that this method will need to be called multiple times for the 
-     * different authentication steps.
-     *
-     * The first time it will request request tokens. The second time it will redirect the
-     * user to the permission page. Subsequent times will simply set up the 
-     * oauth object.
-     *
-     * @param string $redirectUrl 
-     * @return void
+     * The array will contain the elements 'token' and 'token_secret'.
+     * 
+     * @return array 
      */
-    public function setup() {
+    public function getToken() {
 
-        $this->loadState();
-        switch($this->currentState) {
+        return array(
+            'token' => $this->oauth_token,
+            'token_secret' => $this->oauth_token_secret,
+        );
 
-            case self::STATE_UNAUTHORIZED :
-                $tokens = $this->request_token();
-                $this->oauth_token = $tokens['oauth_token'];
-                $this->oauth_token_secret = $tokens['oauth_token_secret'];
+    }
 
-                // Building the redirect uri
-                $uri = self::URI_AUTHORIZE . '?oauth_token=' . $this->oauth_token;
-                if ($this->authorizeCallbackUrl) $uri.='&oauth_callback=' . $this->authorizeCallbackUrl;
-                $this->currentState = self::STATE_USERAUTHORIZING;
-
-                $this->saveState();
-                header('Location: ' . $uri);
-                exit();
-                break;
-            case self::STATE_USERAUTHORIZING :
-                $tokens = $this->access_token($this->oauth_token, $this->oauth_token_secret);
-                $this->oauth_token = $tokens['oauth_token'];
-                $this->oauth_token_secret = $tokens['oauth_token_secret'];
-                $this->currentState = self::STATE_AUTHORIZED;
-                $this->saveState();
-
-        }
-
+    /**
+     * Returns the authorization url
+     * 
+     * @param string $callBack Specify a callback url to automatically redirect the user back 
+     * @return string 
+     */
+    public function getAuthorizeUrl($callBack = null) {
+        
+        // Building the redirect uri
+        $token = $this->getToken();
+        $uri = self::URI_AUTHORIZE . '?oauth_token=' . $token['token'];
+        if ($callBack) $uri.='&oauth_callback=' . $callBack;
+        return $uri;
     }
 
     /**
@@ -165,27 +136,16 @@ abstract class Dropbox_OAuth {
 
     /**
      * Requests the OAuth request token.
-     *
-     * This method must return an array with 2 elements:
-     *   * oauth_token
-     *   * oauth_token_secret
      * 
      * @return array 
      */
-    abstract public function request_token(); 
+    abstract public function getRequestToken(); 
 
     /**
      * Requests the OAuth access tokens.
      *
-     * This method requires the 'unauthorized' request tokens
-     * and, if successful will return the authorized request tokens.
-     * 
-     * This method must return an array with 2 elements:
-     *   * oauth_token
-     *   * oauth_token_secret
-     *
      * @return array
      */
-    abstract public function access_token($oauth_token, $oauth_token_secret); 
+    abstract public function getAccessToken(); 
 
 }

@@ -1,53 +1,63 @@
 <?php
   if (isset($_POST['allow_access']))
   {
-    $consumerKey = 'w8z4e3xgzmskrc6';
-    $consumerSecret = 'kk42qgdi3uu9ykv';
-
     //modify include path to work w/ PEAR on Dreamhost
     ini_set(
 	    'include_path',
-	    ini_get( 'include_path' ) . PATH_SEPARATOR . "home/(youruser)/pear/php"
+	    ini_get( 'include_path' ) . PATH_SEPARATOR . "/home/kshrine/.pear/home/kshrine/pear/php"
 	    );
-
+    
+    $consumerKey = '';
+    $consumerSecret = '';
+    
     include 'Dropbox/autoload.php';
 
     $oauth = new Dropbox_OAuth_PEAR($consumerKey, $consumerSecret);
-    $oauth->authorizeCallbackUrl = $_SERVER["REQUEST_URI"];
+    $dropbox = new Dropbox_API($oauth);
+
+    $tokens = $dropbox->getToken($_POST['email_address'], $_POST['password']);
+    update_option('wpdp_token', $tokens);
+
+    $stored_tokens = get_option('wpdp_token');
+    $oauth->setToken($stored_tokens);
+    $acct_info = $dropbox->getAccountInfo();
+    update_option('wpdp_acct_name', $acct_info['display_name']);
+    
   }
 ?>
 <div class="wrap">
-<h2>WP-Dropbox</h2>
+  <h2>WP-Dropbox</h2>
+  <?php
+    $name_on_authorized_acct = get_option('wpdp_acct_name');
+    if (empty($name_on_authorized_acct))
+      {
+	echo "<h3>No Dropbox in use.</h3>";
+      }
+    else
+      {
+	echo "<h3>Using $name_on_authorized_acct's Dropbox.</h3>";
+      }
+	?>
 
-<form method="post" action="<?php echo $_SERVER["REQUEST_URI"]; ?>" >
-  <input type="hidden" name="allow_access" id="allow_access" value="true" />
-  <div class="submit">
-    <input type="submit" name="allow_access" class="button-primary" value="<?php _e('Allow access to your Dropbox'); ?>" />  
-  </div>
-</form>
+
 
 <form method="post" action="options.php">
-<?php settings_fields('tdp-opt');  ?>
-<table class="form-table">
-
-<tr valign="top">
-<th scope="row">Consumer Key (from Dropbox API registration)</th>
-<td><input type="text" name="tdp_consumer_key" value="<?php echo get_option('tdp_consumer_key'); ?>" /></td>
-</tr>
-
-<tr valign="top">
-<th scope="row">Consumer Secret (from Dropbox API registration)</th>
-<td><input type="password" name="tdp_consumer_secret" value="<?php echo get_option('tdp_consumer_secret'); ?>" /></td>
-</tr>
-
-<tr valign="top">
-<th scope="row">Starting directory:</th>
-<td><input type="text" name="tdp_dir" value="<?php echo get_option('tdp_dir'); ?>" /></td>
-</tr>
-</table>
+  <?php settings_fields('wpdp_options');  ?>
+Directory to use: <input type="text" size="60" name="wpdp_dir" value="<?php echo get_option('wpdp_dir'); ?>" />
 
 <p class="submit">
 <input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
 </p>
+</form>
+
+<h3>Allow Access to Your Dropbox</h3>
+<p>You'll only have to do this once, and we never store your password or email address.</p>
+<form method="post" action="<?php echo $_SERVER["REQUEST_URI"]; ?>" >
+  <input type="hidden" name="allow_access" id="allow_access" value="true" />
+  Email address: <input type="text" name="email_address" id="email_address" /><br/>
+  Password: <input type="password" name="password" id="password" /><br/>
+  <div class="submit">
+    <input type="submit" name="allow_access" class="button-primary" value="<?php _e('Allow'); ?>" />  
+  </div>
 </form>
 </div>
